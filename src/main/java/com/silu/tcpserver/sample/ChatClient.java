@@ -60,6 +60,9 @@ public class ChatClient {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             if (msg instanceof ClientServerMsg.Rsp) {
+                //测试Client
+                System.out.println("===========client Handler Received Msg===========");
+
                 ClientServerMsg.Rsp rsp = (ClientServerMsg.Rsp) msg;
                 switch (rsp.getType()) {
                     case MsgTypeConstant.LOGIN: {
@@ -86,6 +89,8 @@ public class ChatClient {
             builder.setType(MsgTypeConstant.LOGIN);
             builder.setContent(ByteString.copyFrom(sessionId.getBytes(StandardCharsets.UTF_8)));
             ctx.channel().writeAndFlush(builder.build());
+            //测试Client
+            System.out.println("===========Client Send Login Msg===========");
         }
     }
 

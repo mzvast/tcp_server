@@ -26,6 +26,8 @@
         <module name="tcp_workspace" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="tcp_server" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
-

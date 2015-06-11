@@ -33,6 +33,8 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 //        encoded.writeBytes(msg.getBytes());
 //        ctx.write(encoded);
 //        ctx.flush();
+        //测试服务器
+        System.out.println("===========Server Send Msg============");
     }
 
     @Override
@@ -47,6 +49,10 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                     rsp.setType(MsgTypeConstant.LOGIN);
                     rsp.setContent(ByteString.copyFrom("1".getBytes()));
                     ctx.channel().writeAndFlush(rsp.build());
+
+                    //测试服务器
+                    System.out.println("===========Server Handler Received Msg===========");
+
                     break;
                 }
                 default: {
