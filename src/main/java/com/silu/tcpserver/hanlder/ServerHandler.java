@@ -23,6 +23,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
     private ConcurrentHashMap<String, Channel> userChannels = new ConcurrentHashMap<String, Channel>();
 
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println(">>>>> I'm server.");
@@ -33,8 +34,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 //        encoded.writeBytes(msg.getBytes());
 //        ctx.write(encoded);
 //        ctx.flush();
-        //测试服务器
-        System.out.println("===========Server Send Msg============");
+
     }
 
     @Override
@@ -49,10 +49,32 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                     rsp.setType(MsgTypeConstant.LOGIN);
                     rsp.setContent(ByteString.copyFrom("1".getBytes()));
                     ctx.channel().writeAndFlush(rsp.build());
-
                     //测试服务器
-                    System.out.println("===========Server Handler Received Msg===========");
+                    System.out.println("===========Server Received Login===========");
+                    break;
+                }
 
+                //测试send_text_msg
+                case MsgTypeConstant.SEND_TEXT_MSG:{
+                    String sessionId = req.getContent().toStringUtf8();
+                    userChannels.put(sessionId, ctx.channel());
+                    ClientServerMsg.Rsp.Builder rsp = ClientServerMsg.Rsp.newBuilder();
+                    rsp.setType(MsgTypeConstant.RESPOND_TEXT_MSG);
+                    rsp.setContent(ByteString.copyFrom("This is a Text Message Response".getBytes()));
+                    ctx.channel().writeAndFlush(rsp.build());
+                    //测试服务器
+                    System.out.println("===========Server Text_Msg Received===========");
+                    break;
+                }
+                case MsgTypeConstant.ECHO:{
+                    String sessionId = req.getContent().toStringUtf8();
+                    userChannels.put(sessionId, ctx.channel());
+                    ClientServerMsg.Rsp.Builder rsp = ClientServerMsg.Rsp.newBuilder();
+                    rsp.setType(MsgTypeConstant.ECHO);
+                    rsp.setContent(ByteString.copyFrom(sessionId.getBytes()));
+                    ctx.channel().writeAndFlush(rsp.build());
+                    //测试服务器
+                    System.out.println("===========Server Echo response===========");
                     break;
                 }
                 default: {

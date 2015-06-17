@@ -8,10 +8,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
@@ -39,9 +39,11 @@ public class ChatClient {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline()
                                 .addLast(new LoggingHandler(LogLevel.INFO))
-                                .addLast("frameDecoder", new ProtobufVarint32FrameDecoder())
+//                                .addLast("frameDecoder", new ProtobufVarint32FrameDecoder())
+                                .addLast("frameDecoder", new LengthFieldBasedFrameDecoder(65536, 0, 4, 0, 4))
                                 .addLast("pbDecoder", new ProtobufDecoder(ClientServerMsg.Rsp.getDefaultInstance()))
-                                .addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender())
+//                                .addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender())
+                                .addLast("frameEncode", new LengthFieldPrepender(4))
                                 .addLast("protobufEncode", new ProtobufEncoder())
                                 .addLast(new ChatClientHandler());
                     }
@@ -68,8 +70,21 @@ public class ChatClient {
                     case MsgTypeConstant.LOGIN: {
                         String status = rsp.getContent().toStringUtf8();
                         System.out.println(String.format("login result.%s", status));
+                        echoTextMsg(ctx,"This is a Text Message Please echo");
                         break;
                     }
+
+                    case MsgTypeConstant.SEND_TEXT_MSG:{
+                        sendTextMsg(ctx,"This is a Text Message");
+                        break;
+                    }
+                    case MsgTypeConstant.RESPOND_TEXT_MSG:{
+                        String content = rsp.getContent().toStringUtf8();
+                        //测试服务器
+                        System.out.println("Respond Text_Msg Received:"+content);
+                        break;
+                    }
+
                     default: {
                         System.out.println(String.format("type:%s not support.", rsp.getType()));
                         break;
@@ -86,12 +101,27 @@ public class ChatClient {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             String sessionId = UUID.randomUUID().toString();
             ClientServerMsg.Req.Builder builder = ClientServerMsg.Req.newBuilder();
-            builder.setType(MsgTypeConstant.LOGIN);
+            builder.setType(MsgTypeConstant.LOGIN);//Login
             builder.setContent(ByteString.copyFrom(sessionId.getBytes(StandardCharsets.UTF_8)));
             ctx.channel().writeAndFlush(builder.build());
             //测试Client
             System.out.println("===========Client Send Login Msg===========");
         }
+    }
+
+    public static void sendTextMsg(ChannelHandlerContext ctx, String text){
+        ClientServerMsg.Req.Builder builder = ClientServerMsg.Req.newBuilder();
+        builder.setType(MsgTypeConstant.SEND_TEXT_MSG);
+        builder.setContent(ByteString.copyFrom(text.getBytes()));
+        ctx.channel().writeAndFlush(builder.build());
+        System.out.println("===========Text_Msg Sent===========");
+    }
+    public static void echoTextMsg(ChannelHandlerContext ctx, String text){
+        ClientServerMsg.Req.Builder builder = ClientServerMsg.Req.newBuilder();
+        builder.setType(MsgTypeConstant.ECHO);
+        builder.setContent(ByteString.copyFrom(text.getBytes()));
+        ctx.channel().writeAndFlush(builder.build());
+        System.out.println("===========Text_Msg Sent===========");
     }
 
     public static void main(String[] args) {
